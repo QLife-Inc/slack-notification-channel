@@ -37,13 +37,16 @@ class SlackWebhookChannel
      */
     public function send($notifiable, Notification $notification)
     {
-        if (! $url = $notifiable->routeNotificationFor('slack', $notification)) {
-            return;
-        }
-
-        return $this->http->post($url, $this->buildJsonPayload(
-            $notification->toSlack($notifiable)
-        ));
+        $param = $notifiable->routeNotificationFor('slack', $notification);
+        return $this->http->post(
+            $param['endpoint'], [
+                'headers' => [
+                    'Authorization' => sprintf('Bearer %s', $param['token']),
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => $this->buildJsonPayload($notification->toSlack($notifiable))
+            ]
+        );
     }
 
     /**
@@ -55,7 +58,6 @@ class SlackWebhookChannel
     protected function buildJsonPayload(SlackMessage $message)
     {
         $optionalFields = array_filter([
-            'channel' => data_get($message, 'channel'),
             'icon_emoji' => data_get($message, 'icon'),
             'icon_url' => data_get($message, 'image'),
             'link_names' => data_get($message, 'linkNames'),
@@ -65,11 +67,10 @@ class SlackWebhookChannel
         ]);
 
         return array_merge([
-            'json' => array_merge([
+                'channel' => $message->channel,
                 'text' => $message->content,
                 'attachments' => $this->attachments($message),
-            ], $optionalFields),
-        ], $message->http);
+            ], $optionalFields);
     }
 
     /**
