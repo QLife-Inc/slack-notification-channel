@@ -46,9 +46,11 @@ class NotificationSlackChannelTest extends TestCase
      */
     public function testCorrectPayloadIsSentToSlack(Notification $notification, array $payload)
     {
-        $this->guzzleHttp->shouldReceive('post')->andReturnUsing(function ($argUrl, $argPayload) use ($payload) {
-            $this->assertEquals($argUrl, 'url');
-            $this->assertEquals($argPayload, $payload);
+        $this->guzzleHttp->shouldReceive('post')->andReturnUsing(function ($endpoint, $argPayload) use ($payload) {
+            $this->assertEquals($endpoint, 'endpoint');
+            $this->assertEquals($argPayload['headers']['Authorization'], 'Bearer token dummy');
+            $this->assertEquals($argPayload['headers']['Content-Type'], 'application/json');
+            $this->assertEquals($argPayload['json'], $payload);
 
             return new Response();
         });
@@ -71,35 +73,33 @@ class NotificationSlackChannelTest extends TestCase
         return [
             new NotificationSlackChannelTestNotification,
             [
-                'json' => [
-                    'username' => 'Ghostbot',
-                    'icon_emoji' => ':ghost:',
-                    'channel' => '#ghost-talk',
-                    'text' => 'Content',
-                    'attachments' => [
-                        [
-                            'title' => 'Laravel',
-                            'title_link' => 'https://laravel.com',
-                            'text' => 'Attachment Content',
-                            'fallback' => 'Attachment Fallback',
-                            'fields' => [
-                                [
-                                    'title' => 'Project',
-                                    'value' => 'Laravel',
-                                    'short' => true,
-                                ],
+                'channel' => '#ghost-talk',
+                'text' => 'Content',
+                'icon_emoji' => ':ghost:',
+                'username' => 'Ghostbot',
+                'attachments' => [
+                    [
+                        'title' => 'Laravel',
+                        'title_link' => 'https://laravel.com',
+                        'text' => 'Attachment Content',
+                        'fallback' => 'Attachment Fallback',
+                        'fields' => [
+                            [
+                                'title' => 'Project',
+                                'value' => 'Laravel',
+                                'short' => true,
                             ],
-                            'mrkdwn_in' => ['text'],
-                            'footer' => 'Laravel',
-                            'footer_icon' => 'https://laravel.com/fake.png',
-                            'author_name' => 'Author',
-                            'author_link' => 'https://laravel.com/fake_author',
-                            'author_icon' => 'https://laravel.com/fake_author.png',
-                            'ts' => 1234567890,
                         ],
+                        'mrkdwn_in' => ['text'],
+                        'footer' => 'Laravel',
+                        'footer_icon' => 'https://laravel.com/fake.png',
+                        'author_name' => 'Author',
+                        'author_link' => 'https://laravel.com/fake_author',
+                        'author_icon' => 'https://laravel.com/fake_author.png',
+                        'ts' => 1234567890,
                     ],
                 ],
-            ],
+            ]
         ];
     }
 
@@ -108,32 +108,30 @@ class NotificationSlackChannelTest extends TestCase
         return [
             new NotificationSlackChannelTestNotificationWithImageIcon,
             [
-                'json' => [
-                    'username' => 'Ghostbot',
-                    'icon_url' => 'http://example.com/image.png',
-                    'channel' => '#ghost-talk',
-                    'text' => 'Content',
-                    'attachments' => [
-                        [
-                            'title' => 'Laravel',
-                            'title_link' => 'https://laravel.com',
-                            'text' => 'Attachment Content',
-                            'fallback' => 'Attachment Fallback',
-                            'fields' => [
-                                [
-                                    'title' => 'Project',
-                                    'value' => 'Laravel',
-                                    'short' => true,
-                                ],
+                'username' => 'Ghostbot',
+                'icon_url' => 'http://example.com/image.png',
+                'channel' => '#ghost-talk',
+                'text' => 'Content',
+                'attachments' => [
+                    [
+                        'title' => 'Laravel',
+                        'title_link' => 'https://laravel.com',
+                        'text' => 'Attachment Content',
+                        'fallback' => 'Attachment Fallback',
+                        'fields' => [
+                            [
+                                'title' => 'Project',
+                                'value' => 'Laravel',
+                                'short' => true,
                             ],
-                            'mrkdwn_in' => ['text'],
-                            'footer' => 'Laravel',
-                            'footer_icon' => 'https://laravel.com/fake.png',
-                            'ts' => 1234567890,
                         ],
+                        'mrkdwn_in' => ['text'],
+                        'footer' => 'Laravel',
+                        'footer_icon' => 'https://laravel.com/fake.png',
+                        'ts' => 1234567890,
                     ],
                 ],
-            ],
+            ]
         ];
     }
 
@@ -142,19 +140,18 @@ class NotificationSlackChannelTest extends TestCase
         return [
             new NotificationSlackChannelWithoutOptionalFieldsTestNotification,
             [
-                'json' => [
-                    'text' => 'Content',
-                    'attachments' => [
-                        [
-                            'title' => 'Laravel',
-                            'title_link' => 'https://laravel.com',
-                            'text' => 'Attachment Content',
-                            'fields' => [
-                                [
-                                    'title' => 'Project',
-                                    'value' => 'Laravel',
-                                    'short' => true,
-                                ],
+                'text' => 'Content',
+                'channel' => '#ghost-talk',
+                'attachments' => [
+                    [
+                        'title' => 'Laravel',
+                        'title_link' => 'https://laravel.com',
+                        'text' => 'Attachment Content',
+                        'fields' => [
+                            [
+                                'title' => 'Project',
+                                'value' => 'Laravel',
+                                'short' => true,
                             ],
                         ],
                     ],
@@ -168,30 +165,29 @@ class NotificationSlackChannelTest extends TestCase
         return [
             new NotificationSlackChannelWithAttachmentFieldBuilderTestNotification,
             [
-                'json' => [
-                    'text' => 'Content',
-                    'attachments' => [
-                        [
-                            'title' => 'Laravel',
-                            'text' => 'Attachment Content',
-                            'title_link' => 'https://laravel.com',
-                            'callback_id' => 'attachment_callbackid',
-                            'fields' => [
-                                [
-                                    'title' => 'Project',
-                                    'value' => 'Laravel',
-                                    'short' => true,
-                                ],
-                                [
-                                    'title' => 'Special powers',
-                                    'value' => 'Zonda',
-                                    'short' => false,
-                                ],
+                'text' => 'Content',
+                'channel' => '#ghost-talk',
+                'attachments' => [
+                    [
+                        'title' => 'Laravel',
+                        'text' => 'Attachment Content',
+                        'title_link' => 'https://laravel.com',
+                        'callback_id' => 'attachment_callbackid',
+                        'fields' => [
+                            [
+                                'title' => 'Project',
+                                'value' => 'Laravel',
+                                'short' => true,
+                            ],
+                            [
+                                'title' => 'Special powers',
+                                'value' => 'Zonda',
+                                'short' => false,
                             ],
                         ],
                     ],
                 ],
-            ],
+            ]
         ];
     }
 }
@@ -202,7 +198,11 @@ class NotificationSlackChannelTestNotifiable
 
     public function routeNotificationForSlack()
     {
-        return 'url';
+        return [
+            'endpoint' => 'endpoint',
+            'token' => 'token dummy',
+            'channel' => '#ghost-talk'
+        ];
     }
 }
 
@@ -212,7 +212,6 @@ class NotificationSlackChannelTestNotification extends Notification
     {
         return (new SlackMessage)
                     ->from('Ghostbot', ':ghost:')
-                    ->to('#ghost-talk')
                     ->content('Content')
                     ->attachment(function ($attachment) {
                         $timestamp = m::mock(Carbon::class);
@@ -239,7 +238,6 @@ class NotificationSlackChannelTestNotificationWithImageIcon extends Notification
         return (new SlackMessage)
                     ->from('Ghostbot')
                     ->image('http://example.com/image.png')
-                    ->to('#ghost-talk')
                     ->content('Content')
                     ->attachment(function ($attachment) {
                         $timestamp = m::mock(Carbon::class);
