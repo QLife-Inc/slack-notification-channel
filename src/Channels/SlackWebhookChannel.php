@@ -38,6 +38,9 @@ class SlackWebhookChannel
     public function send($notifiable, Notification $notification)
     {
         $param = $notifiable->routeNotificationFor('slack', $notification);
+        if (! $param = $notifiable->routeNotificationFor('slack', $notification)) {
+            return;
+        }
         return $this->http->post(
             $param['endpoint'], [
                 'headers' => [
