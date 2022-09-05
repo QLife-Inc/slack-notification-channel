@@ -37,25 +37,31 @@ class SlackWebhookChannel
      */
     public function send($notifiable, Notification $notification)
     {
-        if (! $url = $notifiable->routeNotificationFor('slack', $notification)) {
+        $param = $notifiable->routeNotificationFor('slack', $notification);
+        if (! $param = $notifiable->routeNotificationFor('slack', $notification)) {
             return;
         }
-
-        return $this->http->post($url, $this->buildJsonPayload(
-            $notification->toSlack($notifiable)
-        ));
+        return $this->http->post(
+            $param['endpoint'], [
+                'headers' => [
+                    'Authorization' => sprintf('Bearer %s', $param['token']),
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => $this->buildJsonPayload($notification->toSlack($notifiable),  $param['channel'])
+            ]
+        );
     }
 
     /**
      * Build up a JSON payload for the Slack webhook.
      *
      * @param  \Illuminate\Notifications\Messages\SlackMessage  $message
+     * @param  string $channel
      * @return array
      */
-    protected function buildJsonPayload(SlackMessage $message)
+    protected function buildJsonPayload(SlackMessage $message, string $channel)
     {
         $optionalFields = array_filter([
-            'channel' => data_get($message, 'channel'),
             'icon_emoji' => data_get($message, 'icon'),
             'icon_url' => data_get($message, 'image'),
             'link_names' => data_get($message, 'linkNames'),
@@ -65,11 +71,10 @@ class SlackWebhookChannel
         ]);
 
         return array_merge([
-            'json' => array_merge([
+                'channel' => $channel,
                 'text' => $message->content,
                 'attachments' => $this->attachments($message),
-            ], $optionalFields),
-        ], $message->http);
+            ], $optionalFields);
     }
 
     /**
