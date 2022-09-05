@@ -47,7 +47,7 @@ class SlackWebhookChannel
                     'Authorization' => sprintf('Bearer %s', $param['token']),
                     'Content-Type' => 'application/json'
                 ],
-                'json' => $this->buildJsonPayload($notification->toSlack($notifiable))
+                'json' => $this->buildJsonPayload($notification->toSlack($notifiable),  $param['channel'])
             ]
         );
     }
@@ -56,9 +56,10 @@ class SlackWebhookChannel
      * Build up a JSON payload for the Slack webhook.
      *
      * @param  \Illuminate\Notifications\Messages\SlackMessage  $message
+     * @param  string $channel
      * @return array
      */
-    protected function buildJsonPayload(SlackMessage $message)
+    protected function buildJsonPayload(SlackMessage $message, string $channel)
     {
         $optionalFields = array_filter([
             'icon_emoji' => data_get($message, 'icon'),
@@ -70,7 +71,7 @@ class SlackWebhookChannel
         ]);
 
         return array_merge([
-                'channel' => $message->channel,
+                'channel' => $channel,
                 'text' => $message->content,
                 'attachments' => $this->attachments($message),
             ], $optionalFields);
